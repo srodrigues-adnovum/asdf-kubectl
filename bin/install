@@ -13,11 +13,12 @@ install_kubectl() {
   local install_path=$3
   local bin_install_path="$install_path/bin"
   local download_url
+  local ext
   download_url="$(get_download_url "$version")"
-
+  ext="$(get_ext)"
   mkdir -p "${bin_install_path}"
 
-  local bin_path="${bin_install_path}/kubectl"
+  local bin_path="${bin_install_path}/kubectl${ext}"
   echo "Downloading kubectl from ${download_url}"
   if curl -L -sf "$download_url" -o "$bin_path"; then
     chmod +x "$bin_path"
@@ -27,8 +28,19 @@ install_kubectl() {
   fi
 }
 
+
 get_arch() {
-  uname | tr '[:upper:]' '[:lower:]'
+  case "$(uname -s)" in
+    Windows_NT | MINGW64*) echo "windows" ;;
+    *) uname | tr '[:upper:]' '[:lower:]' ;;
+  esac
+}
+
+get_ext() {
+  case "$(uname -s)" in
+    Windows_NT | MINGW64*) echo ".exe" ;;
+    *) echo"" ;;
+  esac
 }
 
 get_cpu() {
@@ -49,10 +61,13 @@ get_cpu() {
 get_download_url() {
   local version="$1"
   local platform
-  platform="$(get_arch)"
   local cpu
+  local ext
+  
+  platform="$(get_arch)"
   cpu=$(get_cpu)
-  echo "https://dl.k8s.io/release/v${version}/bin/${platform}/${cpu}/kubectl"
+  ext=$(get_ext)
+  echo "https://dl.k8s.io/release/v${version}/bin/${platform}/${cpu}/kubectl${ext}"
 }
 
 install_kubectl "$ASDF_INSTALL_TYPE" "$ASDF_INSTALL_VERSION" "$ASDF_INSTALL_PATH"
